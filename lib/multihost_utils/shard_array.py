@@ -7,9 +7,10 @@ import numpy as np
 import jax.experimental.mesh_utils as mesh_utils
 
 def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
-    if len(axes) == 2:
+    num_axes = 1 if isinstance(axes, EllipsisType) else len(axes)
+    if num_axes == 2:
         device_tuple = (2, 8)            
-    elif len(axes)==1:
+    elif num_axes == 3:
         device_tuple = (2, 2, 4)
     else:
         device_tuple = (16)
