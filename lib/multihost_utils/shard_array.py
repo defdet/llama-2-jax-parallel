@@ -15,7 +15,7 @@ def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
     else:
         device_tuple = (16, )
     
-    devices = mesh_utils.create_device_mesh(device_tuple)
+    devices = mesh_utils.create_device_mesh((16, ))
     shape = arr.shape
 
     if axes is ...:
