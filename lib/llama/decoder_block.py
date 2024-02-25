@@ -91,7 +91,13 @@ def forward_decoder_block(params: DecoderBlock, seq: Array, qk_mask: Array, *, r
     seq_ = seq
     seq = forward_rms_norm(params.post_attn_norm, seq, model_config=model_config)
     
-    ff = jax.nn.silu(seq @ params.gate_proj) * (seq @ params.up_proj)
+    ff_1 = seq @ params.gate_proj
+    ff_2 = seq @ params.up_proj
+
+    ff_1 = jax.lax.with_sharding_constraint(ff_1, sharding_ff)
+    ff_2 = jax.lax.with_sharding_constraint(ff_2, sharding_ff)
+    
+    ff = jax.nn.silu(ff_1) * ff2
     ff = jax.lax.with_sharding_constraint(ff, sharding_ff)
 
     ff = forward_dropout(ff, key=key1, model_config=model_config)
