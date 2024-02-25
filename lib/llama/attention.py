@@ -82,7 +82,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     mesh_v = Mesh(devices.reshape(sharding_tuple_v), name_tuple_v)     
     sharding_v = NamedSharding(mesh_v, P(*name_tuple_v))
 
-    name_tuple_out = tuple('abcdefghijklmnopqrstuvwxyz'[:4])
+    name_tuple_out = tuple('abcdefghijklmnopqrstuvwxyz'[:3])
     mesh_out = Mesh(devices.reshape(sharding_tuple_out), name_tuple_out)     
     sharding_out = NamedSharding(mesh_out, P(*name_tuple_out))
 
