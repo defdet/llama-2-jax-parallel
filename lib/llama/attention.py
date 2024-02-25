@@ -49,7 +49,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     q_axes = (0, 3)
     k_axes = (0, 2)
     v_axes = (0, 2)
-    out_axes = (0, 1)
+    out_axes = (2, 0)
 
     sharding_tuple_q = [1] * 5
     sharding_tuple_k = [1] * 4
