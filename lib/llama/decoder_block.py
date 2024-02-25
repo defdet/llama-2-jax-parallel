@@ -57,7 +57,7 @@ def forward_decoder_block(params: DecoderBlock, seq: Array, qk_mask: Array, *, r
     device_tuple = (2, 8)
 
     ff_axes = (0, 2)
-    seq_axes = (0, 2)
+    seq_axes = (2, 0)
 
     sharding_tuple_ff = [1] * 3
     sharding_tuple_seq = [1] * 3
@@ -78,6 +78,7 @@ def forward_decoder_block(params: DecoderBlock, seq: Array, qk_mask: Array, *, r
     mesh_seq = Mesh(devices.reshape(sharding_tuple_seq), name_tuple_seq)     
     sharding_seq = NamedSharding(mesh_seq, P(*name_tuple_seq))
     
+    seq = jax.lax.with_sharding_constraint(seq, sharding_seq)
     seq_ = seq
 
     seq = forward_rms_norm(params.input_norm, seq, model_config=model_config)
