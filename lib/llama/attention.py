@@ -41,9 +41,56 @@ def init_attention(*, key: Array, model_config: ModelConfig) -> Attention:
 
 @partial(jax.jit, static_argnames=('model_config',))
 def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask: Array, *, rotary_values: RotaryValues, kv_cache: KVCache | None=None, model_config: ModelConfig) -> tuple[Array, KVCache | None]:
+    devices = mesh_utils.create_device_mesh((16, ))
+    device_tuple = (2, 8)
+
+    q_axes = (0, 2)
+    k_axes = (0, 1)
+    v_axes = (0, 1)
+    out_axes = (0, 1)
+
+    sharding_tuple_q = [1] * 5
+    sharding_tuple_k = [1] * 4
+    sharding_tuple_v = [1] * 4
+    sharding_tuple_out = [1] * 3
+
+    for axis_num, axis in enumerate(q_axes):
+        sharding_tuple_q[axis]=device_tuple[axis_num]
+    for axis_num, axis in enumerate(k_axes):
+        sharding_tuple_k[axis]=device_tuple[axis_num]
+    for axis_num, axis in enumerate(v_axes):
+        sharding_tuple_v[axis]=device_tuple[axis_num]
+    for axis_num, axis in enumerate(out_axes):
+        sharding_tuple_out[axis]=device_tuple[axis_num]
+
+    sharding_tuple_q = tuple(sharding_tuple_q)
+    sharding_tuple_k = tuple(sharding_tuple_k)
+    sharding_tuple_v = tuple(sharding_tuple_v)
+    sharding_tuple_out = tuple(sharding_tuple_out)
+    
+    name_tuple_q = tuple('abcdefghijklmnopqrstuvwxyz'[:5])
+    mesh_q = Mesh(devices.reshape(sharding_tuple_q), name_tuple_q)     
+    sharding_q = NamedSharding(mesh_q, P(*name_tuple_q))
+
+    name_tuple_k = tuple('abcdefghijklmnopqrstuvwxyz'[:4])
+    mesh_k = Mesh(devices.reshape(sharding_tuple_k), name_tuple_k)     
+    sharding_k = NamedSharding(mesh_k, P(*name_tuple_k))
+
+    name_tuple_v = tuple('abcdefghijklmnopqrstuvwxyz'[:4])
+    mesh_v = Mesh(devices.reshape(sharding_tuple_v), name_tuple_v)     
+    sharding_v = NamedSharding(mesh_v, P(*name_tuple_v))
+
+    name_tuple_out = tuple('abcdefghijklmnopqrstuvwxyz'[:4])
+    mesh_out = Mesh(devices.reshape(sharding_tuple_out), name_tuple_out)     
+    sharding_out = NamedSharding(mesh_out, P(*name_tuple_out))
+
     q = op.einsum(src_seq, params.q_proj, 'B S M, M R H K -> B R H S K')
     k = op.einsum(dst_seq, params.k_proj, 'B D M, M H K -> B H D K')
     v = op.einsum(dst_seq, params.v_proj, 'B D M, M H V -> B H D V')
+
+    q = jax.lax.with_sharding_constraint(q, sharding_q)
+    k = jax.lax.with_sharding_constraint(k, sharding_k)
+    v = jax.lax.with_sharding_constraint(v, sharding_v)
 
     q = forward_rotary_embedding(q, rotary_values=rotary_values)
     k = forward_rotary_embedding(k, rotary_values=rotary_values)
@@ -64,6 +111,8 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
 
     qkv = op.einsum(qk, v, 'B R H S D, B H D V -> B R H S V')
     out = op.einsum(qkv, params.out_proj, 'B R H S V, R H V M -> B S M')
+    out = jax.lax.with_sharding_constraint(out, sharding_out)
+    
     kv_cache = None if not model_config.return_kv_cache else KVCache(k, v)
 
     return out, kv_cache
