@@ -62,7 +62,7 @@ def forward_decoder_block(params: DecoderBlock, seq: Array, qk_mask: Array, *, r
         sharding_tuple_ff[axis]=device_tuple[axis_num]
     sharding_tuple_ff = tuple(sharding_tuple_ff)
 
-    name_tuple_ff = tuple('abcdefghijklmnopqrstuvwxyz'[:5])
+    name_tuple_ff = tuple('abcdefghijklmnopqrstuvwxyz'[:3])
     mesh_ff = Mesh(devices.reshape(sharding_tuple_ff), name_tuple_ff)     
     sharding_ff = NamedSharding(mesh_ff, P(*name_tuple_ff))
 
