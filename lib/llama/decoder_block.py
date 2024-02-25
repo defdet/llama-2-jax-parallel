@@ -57,7 +57,7 @@ def forward_decoder_block(params: DecoderBlock, seq: Array, qk_mask: Array, *, r
     device_tuple = (2, 8)
 
     ff_axes = (0, 2)
-    seq_axes = (2, 0)
+    seq_axes = (0, 2)
 
     sharding_tuple_ff = [1] * 3
     sharding_tuple_seq = [1] * 3
