@@ -46,9 +46,9 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     devices = mesh_utils.create_device_mesh((16, ))
     device_tuple = (2, 8)
 
-    q_axes = (0, 3)
-    k_axes = (0, 2)
-    v_axes = (0, 2)
+    q_axes = (0, 2)
+    k_axes = (0, 1)
+    v_axes = (0, 1)
     out_axes = (0, 2)
 
     sharding_tuple_q = [1] * 5
