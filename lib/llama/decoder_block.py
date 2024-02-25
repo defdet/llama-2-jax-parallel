@@ -13,6 +13,8 @@ from .dropout import forward_dropout
 from .kv_cache import KVCache
 from .rms_norm import check_rms_norm, forward_rms_norm, init_rms_norm
 from .rotary_embedding import RotaryValues
+from jax.experimental import mesh_utils
+from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 
 class DecoderBlock(NamedTuple):
     input_norm: Any  # Array
@@ -51,6 +53,18 @@ def init_decoder_block(*, key: Array, model_config: ModelConfig) -> DecoderBlock
 @partial(jax.jit, static_argnames=('model_config',))
 def forward_decoder_block(params: DecoderBlock, seq: Array, qk_mask: Array, *, rotary_values: RotaryValues, kv_cache: KVCache | None=None, key: Array | None=None, model_config: ModelConfig) -> tuple[Array, KVCache | None]:
     key0, key1, key2 = split_key_nullable(key, num=3)
+    devices = mesh_utils.create_device_mesh((16, ))
+    device_tuple = (2, 8)
+
+    ff_axes = (0, 2)
+    sharding_tuple_ff = [1] * 3
+    for axis_num, axis in enumerate(ff_axes):
+        sharding_tuple_ff[axis]=device_tuple[axis_num]
+    sharding_tuple_ff = tuple(sharding_tuple_ff)
+
+    name_tuple_ff = tuple('abcdefghijklmnopqrstuvwxyz'[:5])
+    mesh_ff = Mesh(devices.reshape(sharding_tuple_ff), name_tuple_ff)     
+    sharding_ff = NamedSharding(mesh_ff, P(*name_tuple_ff))
 
     seq_ = seq
     seq = forward_rms_norm(params.input_norm, seq, model_config=model_config)
@@ -60,7 +74,10 @@ def forward_decoder_block(params: DecoderBlock, seq: Array, qk_mask: Array, *, r
 
     seq_ = seq
     seq = forward_rms_norm(params.post_attn_norm, seq, model_config=model_config)
+    
     ff = jax.nn.silu(seq @ params.gate_proj) * (seq @ params.up_proj)
+    ff = jax.lax.with_sharding_constraint(ff, sharding_ff)
+
     ff = forward_dropout(ff, key=key1, model_config=model_config)
     seq = ff @ params.down_proj
     seq = forward_dropout(seq, key=key2, model_config=model_config)
