@@ -4,7 +4,7 @@ import jax
 from jax import Array
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 import numpy as np
-import jax.experimental.mesh_utils as mesh_utils
+from jax.experimental import mesh_utils
 
 def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
     num_axes = 1 if isinstance(axes, EllipsisType) else len(axes)
