@@ -105,7 +105,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
         v = v_cache.at[:, :, -1:].set(v)
     q = q.reshape(q.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, q.shape[3], model_config.d_k)
     qk_mask = qk_mask.squeeze(1)
-    qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], q.shape[2], qk_mask.shape[3], qk_mask.shape[2]))
+    qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, qk_mask.shape[3], qk_mask.shape[2]))
 
     out = flash_attention(q, k, v, ab=qk_mask, sm_scale=math.sqrt(model_config.d_k))
     print(out.shape, 'product shape')
