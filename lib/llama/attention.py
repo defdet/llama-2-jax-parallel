@@ -15,6 +15,8 @@ from .rotary_embedding import RotaryValues, forward_rotary_embedding
 from jax.experimental import mesh_utils
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 from .jax_flash_attn_tpu import flash_attention
+from jax.experimental.shard_map import shard_map
+
 class Attention(NamedTuple):
     q_proj: Any  # Array
     k_proj: Any  # Array
@@ -106,8 +108,12 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     q = q.reshape(q.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, q.shape[3], model_config.d_k)
     qk_mask = qk_mask.squeeze(1)
     qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, qk_mask.shape[3], qk_mask.shape[2]))
-
-    qkv = flash_attention(q, k, v, ab=qk_mask, sm_scale=math.sqrt(model_config.d_k))
+    specs_tuple = (P(*name_tuple_k),
+                   P(*name_tuple_k),
+                   P(*name_tuple_k),
+                   P(*name_tuple_k))
+    
+    qkv = shard_map(flash_attention, mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k)(q, k, v, ab=qk_mask, sm_scale=math.sqrt(model_config.d_k))
     qkv = jnp.expand_dims(qkv, 1)
     print(qkv.shape, 'product shape after dims expand')
     out = op.einsum(qkv, params.out_proj, 'B R H S V, R H V M -> B S M')
