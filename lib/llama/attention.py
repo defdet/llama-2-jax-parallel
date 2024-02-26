@@ -107,8 +107,10 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     qk_mask = qk_mask.squeeze(1)
     qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, qk_mask.shape[3], qk_mask.shape[2]))
 
-    out = flash_attention(q, k, v, ab=qk_mask, sm_scale=math.sqrt(model_config.d_k))
-    print(out.shape, 'product shape')
+    qkv = flash_attention(q, k, v, ab=qk_mask, sm_scale=math.sqrt(model_config.d_k))
+    qkv = jnp.expand_dims(qkv, 1)
+    print(qkv.shape, 'product shape after dims expand')
+    out = op.einsum(qkv, params.out_proj, 'B R H S V, R H V M -> B S M')
     out = jax.lax.with_sharding_constraint(out, sharding_out)
     
     kv_cache = None if not model_config.return_kv_cache else KVCache(k, v)
