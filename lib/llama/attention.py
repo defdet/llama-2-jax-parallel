@@ -104,7 +104,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
         k = k_cache.at[:, :, -1:].set(k)
         v = v_cache.at[:, :, -1:].set(v)
 
-    out = flash_attention(q, k, v, ab=qk_mask)
+    out = flash_attention(q, k, v, ab=qk_mask, sm_scale=math.sqrt(model_config.d_k))
     out = jax.lax.with_sharding_constraint(out, sharding_out)
     
     kv_cache = None if not model_config.return_kv_cache else KVCache(k, v)
