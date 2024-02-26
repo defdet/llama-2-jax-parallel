@@ -17,6 +17,7 @@ def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
     
     devices = mesh_utils.create_device_mesh((16, ))
     shape = arr.shape
+    print(f'sharding array of shape {shape} with number of axes {num_axes}') 
 
     if axes is ...:
         mesh = Mesh(devices, ('a',))
