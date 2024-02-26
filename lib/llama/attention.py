@@ -103,8 +103,10 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
         k_cache, v_cache = kv_cache
         k = k_cache.at[:, :, -1:].set(k)
         v = v_cache.at[:, :, -1:].set(v)
+    q = q.reshape(model_config.d_model, model_config.n_rep_kv * model_config.n_heads_kv, model_config.d_k)
 
     out = flash_attention(q, k, v, ab=qk_mask, sm_scale=math.sqrt(model_config.d_k))
+    print(out.shape, 'product shape')
     out = jax.lax.with_sharding_constraint(out, sharding_out)
     
     kv_cache = None if not model_config.return_kv_cache else KVCache(k, v)
