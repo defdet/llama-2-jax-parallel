@@ -113,7 +113,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
                    P(*name_tuple_k),
                    P(*name_tuple_k))
     
-    qkv = shard_map(partial(flash_attention, sm_scale=math.sqrt(model_config.d_k)), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k))(q, k, v, qk_mask)
+    qkv = shard_map(partial(flash_attention, sm_scale=math.sqrt(model_config.d_k)), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, qk_mask)
     qkv = jnp.expand_dims(qkv, 1)
     print(qkv.shape, 'product shape after dims expand')
     out = op.einsum(qkv, params.out_proj, 'B R H S V, R H V M -> B S M')
