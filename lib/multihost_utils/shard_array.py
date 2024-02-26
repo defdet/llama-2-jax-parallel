@@ -17,7 +17,6 @@ def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
     
     devices = mesh_utils.create_device_mesh((16, ))
     shape = arr.shape
-    print(f'sharding array of shape {shape} with number of axes {num_axes}') 
 
     if axes is ...:
         mesh = Mesh(devices, ('a',))
@@ -32,6 +31,4 @@ def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
         sharding = NamedSharding(mesh, P(*name_tuple))
 
     xs = [jax.device_put(arr[i], device) for device, i in sharding.addressable_devices_indices_map(shape).items()]
-    arr = jax.make_array_from_single_device_arrays(shape, sharding, xs)
-    gc.collect()
-    return arr
+    return jax.make_array_from_single_device_arrays(shape, sharding, xs)
