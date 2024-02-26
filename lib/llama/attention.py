@@ -103,7 +103,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
         k_cache, v_cache = kv_cache
         k = k_cache.at[:, :, -1:].set(k)
         v = v_cache.at[:, :, -1:].set(v)
-    q = q.reshape(q[0], model_config.n_rep_kv * model_config.n_heads_kv, q[3], model_config.d_k)
+    q = q.reshape(q.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, q.shape[3], model_config.d_k)
 
     out = flash_attention(q, k, v, ab=qk_mask, sm_scale=math.sqrt(model_config.d_k))
     print(out.shape, 'product shape')
