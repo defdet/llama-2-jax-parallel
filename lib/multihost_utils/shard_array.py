@@ -5,7 +5,7 @@ from jax import Array
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 import numpy as np
 from jax.experimental import mesh_utils
-
+import gc
 def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
     num_axes = 1 if isinstance(axes, EllipsisType) else len(axes)
     if num_axes == 2:
@@ -33,5 +33,5 @@ def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
 
     xs = [jax.device_put(arr[i], device) for device, i in sharding.addressable_devices_indices_map(shape).items()]
     arr = jax.make_array_from_single_device_arrays(shape, sharding, xs)
-    jax.debug.visualize_array_sharding(arr)
+    gc.collect()
     return arr
