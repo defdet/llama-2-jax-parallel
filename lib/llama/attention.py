@@ -117,7 +117,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
             qk_mask == True,
             jnp.full(qk_mask.shape, 0.0).astype(jnp.float32),
             jnp.full(qk_mask.shape, jnp.finfo(
-                self.dtype).min).astype(jnp.float32),
+                jnp.float32).min).astype(jnp.float32),
         )
     specs_tuple = (P(*name_tuple_k),
                    P(*name_tuple_k),
