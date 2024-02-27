@@ -113,13 +113,20 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     q = q.reshape(q.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, q.shape[3], model_config.d_k)
     qk_mask = qk_mask.squeeze(1)
     qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, qk_mask.shape[3], qk_mask.shape[2]))
+    attention_bias = jax.lax.select(
+            qk_mask == True,
+            jnp.full(qk_mask.shape, 0.0).astype(self.dtype),
+            jnp.full(qk_mask.shape, jnp.finfo(
+                self.dtype).min).astype(self.dtype),
+        )
     specs_tuple = (P(*name_tuple_k),
                    P(*name_tuple_k),
                    P(*name_tuple_k),
                    P(*name_tuple_k))
     
-    qkv = shard_map(partial(flash_attention, sm_scale=math.sqrt(model_config.d_k), debug=False), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, qk_mask)
+    qkv = shard_map(partial(flash_attention, sm_scale=math.sqrt(model_config.d_k), debug=False), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, attention_bias)
     qkv = jnp.expand_dims(qkv, 1)
+    qkv = qkv.astype(jnp.bfloat16)
     print(qkv.shape, 'product shape after dims expand')
     out = op.einsum(qkv, params.out_proj, 'B R H S V, R H V M -> B S M')
     out = jax.lax.with_sharding_constraint(out, sharding_out)
