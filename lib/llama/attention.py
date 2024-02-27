@@ -99,11 +99,6 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     q = forward_rotary_embedding(q, rotary_values=rotary_values)
     k = forward_rotary_embedding(k, rotary_values=rotary_values)
 
-    q, k, v = map(
-        lambda s: s.astype(jnp.float32),
-        (q, k, v)
-    )
-
     if kv_cache is not None:
         assert src_seq.shape[1] == 1
         assert dst_seq.shape[1] == 1
@@ -115,9 +110,9 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, qk_mask.shape[3], qk_mask.shape[2]))
     attention_bias = jax.lax.select(
             qk_mask == True,
-            jnp.full(qk_mask.shape, 0.0).astype(jnp.float32),
+            jnp.full(qk_mask.shape, 0.0),
             jnp.full(qk_mask.shape, jnp.finfo(
-                jnp.float32).min).astype(jnp.float32),
+                jnp.float32).min),
         )
     specs_tuple = (P(*name_tuple_k),
                    P(*name_tuple_k),
