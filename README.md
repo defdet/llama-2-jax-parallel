@@ -1,4 +1,4 @@
-This fork aims to implement 2-d model parallel (full sharding)
+This fork aims to implement 2-d model parallel (full sharding) as well as flash attention. Both work (tested on v4-32 TPU)
 # Llama 2 JAX
 
 This project is the JAX implementation of [Llama 2](https://arxiv.org/abs/1910.13461). The objectives of this project are threefold:
