@@ -105,11 +105,14 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
         k_cache, v_cache = kv_cache
         k = k_cache.at[:, :, -1:].set(k)
         v = v_cache.at[:, :, -1:].set(v)
+    q_shape = q.shape
 
     # q = q.reshape(q.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, q.shape[3], model_config.d_k)
-    q = q.reshape(q.shape[0], 16, q.shape[3], model_config.d_k) # For qwen 1.8 B
+    q = q.reshape(q_shape[0], q_shape[1] * q_shape[2], q_shape[3], q_shape[4]) # [B, H, S, K]
+    q_shape = q.shape
+
     qk_mask = qk_mask.squeeze(1)
-    qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, qk_mask.shape[3], qk_mask.shape[2]))
+    qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], q_shape[1], q_shape[2], q_shape[2]))
 
     attention_bias = jax.lax.select(
             qk_mask == True,
