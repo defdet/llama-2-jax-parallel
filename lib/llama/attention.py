@@ -14,7 +14,7 @@ from .kv_cache import KVCache
 from .rotary_embedding import RotaryValues, forward_rotary_embedding
 from jax.experimental import mesh_utils
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
-from .jax_flash_attn_tpu import flash_attention
+from jax.experimental.pallas.ops.tpu import flash_attention
 from jax.experimental.shard_map import shard_map
 
 class Attention(NamedTuple):
