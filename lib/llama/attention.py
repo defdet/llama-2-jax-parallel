@@ -47,7 +47,21 @@ def init_attention(*, key: Array, model_config: ModelConfig) -> Attention:
 
 @partial(jax.jit, static_argnames=('model_config',))
 def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask: Array, *, rotary_values: RotaryValues, kv_cache: KVCache | None=None, model_config: ModelConfig) -> tuple[Array, KVCache | None]:
-    attn_impl = 'ring'
+    size_num = 1028
+    block_sizes = BlockSizes(
+        block_q=size_num,
+        block_k_major=size_num,
+        block_k=size_num,
+        block_b=1,
+        block_q_major_dkv=size_num,
+        block_k_major_dkv=size_num,
+        block_k_dkv=size_num,
+        block_q_dkv=size_num,
+        block_k_major_dq=size_num,
+        block_k_dq=size_num,
+        block_q_dq=size_num,
+    )
+    attn_impl = 'flash'
     devices = mesh_utils.create_device_mesh((16, ))
     device_tuple = (2, 8)
 
