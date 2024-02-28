@@ -47,7 +47,7 @@ def init_attention(*, key: Array, model_config: ModelConfig) -> Attention:
 
 @partial(jax.jit, static_argnames=('model_config',))
 def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask: Array, *, rotary_values: RotaryValues, kv_cache: KVCache | None=None, model_config: ModelConfig) -> tuple[Array, KVCache | None]:
-    size_num = 128
+    size_num = 256
     block_sizes = BlockSizes(
         block_q=size_num,
         block_k_major=size_num,
