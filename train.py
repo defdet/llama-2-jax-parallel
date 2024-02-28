@@ -4,7 +4,6 @@ import fire
 from typing import NamedTuple, Tuple
 import jax
 import jax.numpy as jnp
-from mistral import convert_mistral_lm_params, forward_mistral_lm, shard_mistral_lm_params
 from transformers import AutoTokenizer, MistralForCausalLM
 from lib.proc_init_utils import initialise_tpu
 
