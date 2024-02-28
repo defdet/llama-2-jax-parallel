@@ -17,7 +17,7 @@ from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
 from jax.experimental.pallas.ops.tpu import flash_attention
 from jax.experimental.shard_map import shard_map
 from .ring_attention import ring_attention
-from .flash_attention import flash_attention
+from .flash_attention import flash_attention, BlockSizes
 
 class Attention(NamedTuple):
     q_proj: Any  # Array
