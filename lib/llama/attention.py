@@ -157,14 +157,11 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     qk_mask = qk_mask.squeeze(1)
     qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], q_shape[1], q_shape[2], q_shape[2]))
 
-    q = q.astype(jnp.float32)
-    k = k.astype(jnp.float32)
-    v = v.astype(jnp.float32)
 
     attention_bias = jax.lax.select(
             qk_mask == True,
-            jnp.full(qk_mask.shape, 0.0).astype(jnp.float32),
-            jnp.full(qk_mask.shape, -10+6).astype(jnp.float32),
+            jnp.full(qk_mask.shape, 0.0).astype(jnp.bfloat16),
+            jnp.full(qk_mask.shape, -10+6).astype(jnp.bfloat16),
         )
     specs_tuple = (P(*name_tuple_k),
                    P(*name_tuple_k),
@@ -177,7 +174,6 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
         qkv = shard_map(partial(ring_attention, sm_scale=math.sqrt(model_config.d_k), debug=False, causal=False), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, attention_bias)
 
     qkv = qkv.reshape(qkv.shape[0], model_config.n_rep_kv, qkv.shape[2] // model_config.n_rep_kv, qkv.shape[3], qkv.shape[4])
-    qkv = qkv.astype(jnp.bfloat16)
     out = op.einsum(qkv, params.out_proj, 'B R H S V, R H V M -> B S M')
     out = jax.lax.with_sharding_constraint(out, sharding_out)
     
