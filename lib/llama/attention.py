@@ -143,6 +143,9 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     k = repeat_kv_bnsh(k, model_config.n_rep_kv)
     v = repeat_kv_bnsh(v, model_config.n_rep_kv)
 
+    print(k.shape, 'k')
+    print(v.shape, 'v')
+
     if kv_cache is not None:
         assert src_seq.shape[1] == 1
         assert dst_seq.shape[1] == 1
