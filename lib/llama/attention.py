@@ -173,7 +173,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     elif attn_impl == 'ring':
         qkv = shard_map(partial(ring_attention, sm_scale=math.sqrt(model_config.d_k), debug=False, causal=True), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, attention_bias)
     qkv = jnp.expand_dims(qkv, 1)
-    qkv = qkv.reshape(qkv.shape[0], rp_heads, qkv.shape[2] / rp_heads, qkv.shape[3], qkv.shape[4])
+    qkv = qkv.reshape(qkv.shape[0], rp_heads, qkv.shape[2] // rp_heads, qkv.shape[3], qkv.shape[4])
     out = op.einsum(qkv, params.out_proj, 'B R H S V, R H V M -> B S M')
     out = jax.lax.with_sharding_constraint(out, sharding_out)
     
