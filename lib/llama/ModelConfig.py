@@ -35,7 +35,7 @@ model_config_dummy = ModelConfig(
     return_kv_cache=False,
 )
 
-ModelConfig(
+model_config_llama1_7B = ModelConfig(
     d_ff=14336,
     d_k=128,
     d_model=4096,
