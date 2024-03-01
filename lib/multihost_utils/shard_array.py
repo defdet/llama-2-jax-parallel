@@ -9,13 +9,13 @@ import gc
 def shard_array(arr: Array, axes: tuple | EllipsisType) -> Array:
     num_axes = 1 if isinstance(axes, EllipsisType) else len(axes)
     if num_axes == 2:
-        device_tuple = (2, 8)            
+        device_tuple = (2, jax.device_count() // 2)            
     elif num_axes == 3:
         device_tuple = (2, 2, 4)
     else:
-        device_tuple = (16, )
+        device_tuple = (jax.device_count(), )
     
-    devices = mesh_utils.create_device_mesh((16, ))
+    devices = mesh_utils.create_device_mesh((jax.device_count(), ))
     shape = arr.shape
 
     if axes is ...:
