@@ -35,20 +35,20 @@ model_config_dummy = ModelConfig(
     return_kv_cache=False,
 )
 
-model_config_llama1_7B = ModelConfig(
-    d_ff=11008,
+ModelConfig(
+    d_ff=14336,
     d_k=128,
     d_model=4096,
     d_v=128,
     n_heads_kv=8,
     n_layers=32,
     n_rep_kv=4,
-    rms_norm_eps=1e-6,
+    rms_norm_eps=1e-5, 
     token_id_bos=1,
     token_id_eos=2,
     token_id_pad=0,
     vocab_size=32000,
-    dropout_rate=0.1,
+    dropout_rate=None,
     return_kv_cache=False,
 )
 
