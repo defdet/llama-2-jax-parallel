@@ -46,7 +46,7 @@ def init_attention(*, key: Array, model_config: ModelConfig) -> Attention:
     return Attention(q_proj, k_proj, v_proj, out_proj)
 
 # Taken from EasyDel
-def repeat_kv_bnsh(x: jax.Array, n_rep: int) -> jax.Array:
+def repeat_kv_bnsh(x: Array, n_rep: int) -> Array:
     """
     The repeat_kv_bnsh function is used to repeat the key and value vectors for each head in a multi-head attention
     module. This function takes as input an array of shape (batch_size, n_heads, sequence_length, head_dim) and returns
@@ -69,7 +69,7 @@ def repeat_kv_bnsh(x: jax.Array, n_rep: int) -> jax.Array:
 
 @partial(jax.jit, static_argnames=('model_config',))
 def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask: Array, *, rotary_values: RotaryValues, kv_cache: KVCache | None=None, model_config: ModelConfig) -> tuple[Array, KVCache | None]:
-    size_num = 256
+    size_num = 128
     block_sizes = BlockSizes(
         block_q=size_num,
         block_k_major=size_num,
