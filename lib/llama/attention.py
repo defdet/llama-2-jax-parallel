@@ -46,7 +46,7 @@ def init_attention(*, key: Array, model_config: ModelConfig) -> Attention:
     return Attention(q_proj, k_proj, v_proj, out_proj)
 
 # Taken from EasyDel
-def repeat_kv_bnsh(x: chex.Array, n_rep: int) -> chex.Array:
+def repeat_kv_bnsh(x: jax.Array, n_rep: int) -> jax.Array:
     """
     The repeat_kv_bnsh function is used to repeat the key and value vectors for each head in a multi-head attention
     module. This function takes as input an array of shape (batch_size, n_heads, sequence_length, head_dim) and returns
