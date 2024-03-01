@@ -45,6 +45,28 @@ def init_attention(*, key: Array, model_config: ModelConfig) -> Attention:
     out_proj = rand.truncated_normal(key3, -upper, upper, (model_config.n_rep_kv, model_config.n_heads_kv, model_config.d_v, model_config.d_model))
     return Attention(q_proj, k_proj, v_proj, out_proj)
 
+# Taken from EasyDel
+def repeat_kv_bnsh(x: chex.Array, n_rep: int) -> chex.Array:
+    """
+    The repeat_kv_bnsh function is used to repeat the key and value vectors for each head in a multi-head attention
+    module. This function takes as input an array of shape (batch_size, n_heads, sequence_length, head_dim) and returns
+    an array of shape (batch_size, n_heads * nrep, sequence length, head dim). The reason this is necessary is because the
+    attention module expects keys/values/queries to be repeated across heads but not across batches. However we want our
+    keys/values/queries to be repeated both across heads AND batches so that we can use them
+
+    :param x: chex.Array: Pass in the input to the function
+    :param n_rep: int: Repeat the key and value heads
+    :return: A new array with the same shape as x, except for the second dimension which is n_kv_heads * n_rep
+
+    """
+    bs, n_kv_heads, s, head_dim = x.shape
+    if n_rep == 1:
+        return x
+    x = x[:, :, jax.numpy.newaxis, :, :]
+    x = jax.numpy.repeat(x, n_rep, axis=2)
+
+    return x.reshape(bs, n_kv_heads * n_rep, s, head_dim)
+
 @partial(jax.jit, static_argnames=('model_config',))
 def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask: Array, *, rotary_values: RotaryValues, kv_cache: KVCache | None=None, model_config: ModelConfig) -> tuple[Array, KVCache | None]:
     size_num = 256
@@ -116,13 +138,17 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     q = forward_rotary_embedding(q, rotary_values=rotary_values)
     k = forward_rotary_embedding(k, rotary_values=rotary_values)
 
+    q_shape = q.shape
+
+    k = repeat_kv_bnsh(k, q_shape[1])
+    v = repeat_kv_bnsh(v, q_shape[1])
+
     if kv_cache is not None:
         assert src_seq.shape[1] == 1
         assert dst_seq.shape[1] == 1
         k_cache, v_cache = kv_cache
         k = k_cache.at[:, :, -1:].set(k)
         v = v_cache.at[:, :, -1:].set(v)
-    q_shape = q.shape
 
     # q = q.reshape(q.shape[0], model_config.n_rep_kv * model_config.n_heads_kv, q.shape[3], model_config.d_k)
     q = q.reshape(q_shape[0], q_shape[1] * q_shape[2], q_shape[3], q_shape[4]) # [B, H, S, K]
