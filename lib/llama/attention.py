@@ -162,7 +162,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     v = v.astype(jnp.float32)
 
     attention_bias = jax.lax.select(
-            qk_mask == False,
+            qk_mask == True,
             jnp.full(qk_mask.shape, 0.0).astype(jnp.float32),
             jnp.full(qk_mask.shape, -10+6).astype(jnp.float32),
         )
