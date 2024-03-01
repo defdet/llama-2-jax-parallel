@@ -172,9 +172,9 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
                    P(*name_tuple_k))
     
     if attn_impl == 'flash':
-        qkv = shard_map(partial(flash_attention, sm_scale=math.sqrt(model_config.d_k), debug=False, causal=True, block_sizes=block_sizes), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, attention_bias)
+        qkv = shard_map(partial(flash_attention, sm_scale=math.sqrt(model_config.d_k), debug=False, causal=False, block_sizes=block_sizes), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, attention_bias)
     elif attn_impl == 'ring':
-        qkv = shard_map(partial(ring_attention, sm_scale=math.sqrt(model_config.d_k), debug=False, causal=True), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, attention_bias)
+        qkv = shard_map(partial(ring_attention, sm_scale=math.sqrt(model_config.d_k), debug=False, causal=False), mesh=mesh_k, in_specs=specs_tuple, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, attention_bias)
     qkv = jnp.expand_dims(qkv, 1)
     qkv = qkv.reshape(qkv.shape[0], model_config.n_rep_kv, qkv.shape[2] // model_config.n_rep_kv, qkv.shape[3], qkv.shape[4])
     qkv = qkv.astype(jnp.bfloat16)
