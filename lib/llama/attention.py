@@ -164,7 +164,7 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     attention_bias = jax.lax.select(
             qk_mask == True,
             jnp.full(qk_mask.shape, 0.0).astype(jnp.float32),
-            jnp.full(qk_mask.shape, 1e-6).astype(jnp.float32),
+            jnp.full(qk_mask.shape, 1e6).astype(jnp.float32),
         )
     specs_tuple = (P(*name_tuple_k),
                    P(*name_tuple_k),
