@@ -19,11 +19,15 @@ from jax.experimental.shard_map import shard_map
 from .ring_attention import ring_attention
 from .flash_attention import flash_attention, BlockSizes
 
+class AttentionProj(NamedTuple):
+    weight: Array
+    bias: Array
+
 class Attention(NamedTuple):
-    q_proj: Any  # Array
-    k_proj: Any  # Array
-    v_proj: Any  # Array
-    out_proj: Any  # Array
+    q_proj: AttentionProj  # Array
+    k_proj: AttentionProj  # Array
+    v_proj: AttentionProj  # Array
+    out_proj: AttentionProj  # Array
 
 def check_attention(params: Attention, *, model_config: ModelConfig) -> None:
     assert isinstance(params.q_proj, Array)
@@ -127,9 +131,13 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     mesh_out = Mesh(devices.reshape(sharding_tuple_out), name_tuple_out)     
     sharding_out = NamedSharding(mesh_out, P(*name_tuple_out))
 
-    q = op.einsum(src_seq, params.q_proj, 'B S M, M R H K -> B R H S K')
-    k = op.einsum(dst_seq, params.k_proj, 'B D M, M H K -> B H D K')
-    v = op.einsum(dst_seq, params.v_proj, 'B D M, M H V -> B H D V')
+    q_proj = params.q_proj
+    k_proj = params.k_proj
+    v_proj = params.v_proj
+
+    q = op.einsum(src_seq, q_proj.weight, 'B S M, M R H K -> B R H S K')  + q_proj.bias
+    k = op.einsum(dst_seq, k_proj.weight, 'B D M, M H K -> B H D K') + k_proj.bias
+    v = op.einsum(dst_seq, v_proj.weight, 'B D M, M H V -> B H D V') + v_proj.bias
 
     q = jax.lax.with_sharding_constraint(q, sharding_q)
     k = jax.lax.with_sharding_constraint(k, sharding_k)
@@ -139,9 +147,6 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     k = forward_rotary_embedding(k, rotary_values=rotary_values)
 
     q_shape = q.shape
-
-    k = repeat_kv_bnsh(k, model_config.n_rep_kv)
-    v = repeat_kv_bnsh(v, model_config.n_rep_kv)
 
     q = q.astype(jnp.float32)
     k = k.astype(jnp.float32)
