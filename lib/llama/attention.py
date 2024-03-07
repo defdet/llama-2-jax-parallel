@@ -160,6 +160,9 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     q = q.reshape(q_shape[0], q_shape[1] * q_shape[2], q_shape[3], q_shape[4]) # [B, H, S, K]
     q_shape = q.shape
 
+    k = repeat_kv_bnsh(k, model_config.n_rep_kv)
+    v = repeat_kv_bnsh(v, model_config.n_rep_kv)
+
     qk_mask = qk_mask.squeeze(1)
     qk_mask = jnp.broadcast_to(qk_mask, (qk_mask.shape[0], q_shape[1], q_shape[2], q_shape[2]))
 
