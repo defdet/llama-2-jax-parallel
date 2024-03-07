@@ -135,9 +135,9 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     k_proj = params.k_proj
     v_proj = params.v_proj
 
-    q = op.einsum(src_seq, q_proj.weight, 'B S M, M R H K -> B R H S K')  + q_proj.bias
-    k = op.einsum(dst_seq, k_proj.weight, 'B D M, M H K -> B H D K') + k_proj.bias
-    v = op.einsum(dst_seq, v_proj.weight, 'B D M, M H V -> B H D V') + v_proj.bias
+    q = op.einsum(src_seq, q_proj, 'B S M, M R H K -> B R H S K')
+    k = op.einsum(dst_seq, k_proj, 'B D M, M H K -> B H D K')
+    v = op.einsum(dst_seq, v_proj, 'B D M, M H V -> B H D V')
 
     q = jax.lax.with_sharding_constraint(q, sharding_q)
     k = jax.lax.with_sharding_constraint(k, sharding_k)
