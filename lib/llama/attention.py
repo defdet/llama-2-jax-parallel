@@ -19,15 +19,12 @@ from jax.experimental.shard_map import shard_map
 from .ring_attention import ring_attention
 from .flash_attention import flash_attention, BlockSizes
 
-class AttentionProj(NamedTuple):
-    weight: Array
-    bias: Array
 
 class Attention(NamedTuple):
-    q_proj: AttentionProj  # Array
-    k_proj: AttentionProj  # Array
-    v_proj: AttentionProj  # Array
-    out_proj: AttentionProj  # Array
+    q_proj: Array  # Array
+    k_proj: Array  # Array
+    v_proj: Array  # Array
+    out_proj: Array  # Array
 
 def check_attention(params: Attention, *, model_config: ModelConfig) -> None:
     assert isinstance(params.q_proj, Array)
