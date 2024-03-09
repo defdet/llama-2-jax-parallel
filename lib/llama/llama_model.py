@@ -46,7 +46,6 @@ def forward_llama_model(params: LlamaModel, seq: Array, qk_mask: Array, *, rotar
     assert key is None or model_config.dropout_rate is not None
 
     seq = forward_embedding(params.embedding, seq)
-    seq = jax.lax.with_sharding_constraint(seq, sharding_seq)
 
     seq, kv_cache = forward_decoder(params.decoder, seq, qk_mask, rotary_values=rotary_values, kv_cache=kv_cache, key=key, model_config=model_config)
     seq = forward_rms_norm(params.norm, seq, model_config=model_config)
