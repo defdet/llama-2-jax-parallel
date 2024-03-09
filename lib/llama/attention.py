@@ -145,10 +145,6 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
 
     q_shape = q.shape
 
-    q = q.astype(jnp.float32)
-    k = k.astype(jnp.float32)
-    v = v.astype(jnp.float32)
-
     if kv_cache is not None:
         assert src_seq.shape[1] == 1
         assert dst_seq.shape[1] == 1
