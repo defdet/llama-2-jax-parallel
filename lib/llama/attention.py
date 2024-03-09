@@ -147,6 +147,11 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     q = forward_rotary_embedding(q, rotary_values=rotary_values)
     k = forward_rotary_embedding(k, rotary_values=rotary_values)
 
+    if n_devices == 32:
+        q = q.astype(jnp.float32)
+        k = k.astype(jnp.float32)
+        v = v.astype(jnp.float32)
+
     q_shape = q.shape
 
     if kv_cache is not None:
