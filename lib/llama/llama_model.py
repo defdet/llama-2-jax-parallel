@@ -40,7 +40,6 @@ def init_llama_model(*, key: Array, model_config: ModelConfig) -> LlamaModel:
 def forward_llama_model(params: LlamaModel, seq: Array, qk_mask: Array, *, rotary_values: RotaryValues, kv_cache: KVCache | None=None, key: Array | None=None, model_config: ModelConfig) -> tuple[Array, KVCache | None]:
     assert isinstance(seq, Array)
     assert isinstance(qk_mask, Array)
-    assert seq.dtype == jnp.uint16
     assert qk_mask.dtype == jnp.bool_
     assert model_config.d_k % 2 == 0
     assert key is None or model_config.dropout_rate is not None
