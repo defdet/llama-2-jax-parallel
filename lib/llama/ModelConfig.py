@@ -48,7 +48,7 @@ model_config_llama1_7B = ModelConfig(
     token_id_eos=2,
     token_id_pad=0,
     vocab_size=32000,
-    dropout_rate=0.1,
+    dropout_rate=None,
     return_kv_cache=False,
 )
 
