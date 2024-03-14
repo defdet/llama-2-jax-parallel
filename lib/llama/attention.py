@@ -97,11 +97,13 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     k_axes = (0, 1)
     v_axes = (0, 1)
     out_axes = (0, 2)
+    id_axes = (0, 1)
 
     sharding_tuple_q = [1] * 5
     sharding_tuple_k = [1] * 4
     sharding_tuple_v = [1] * 4
     sharding_tuple_out = [1] * 3
+    sharding_tuple_id = [1] * 2
 
     for axis_num, axis in enumerate(q_axes):
         sharding_tuple_q[axis]=device_tuple[axis_num]
@@ -111,11 +113,14 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
         sharding_tuple_v[axis]=device_tuple[axis_num]
     for axis_num, axis in enumerate(out_axes):
         sharding_tuple_out[axis]=device_tuple[axis_num]
+    for axis_num, axis in enumerate(id_axes):
+        sharding_tuple_id[axis]=device_tuple[axis_num]
 
     sharding_tuple_q = tuple(sharding_tuple_q)
     sharding_tuple_k = tuple(sharding_tuple_k)
     sharding_tuple_v = tuple(sharding_tuple_v)
     sharding_tuple_out = tuple(sharding_tuple_out)
+    sharding_tuple_id = tuple(sharding_tuple_id)
     
     name_tuple_q = tuple('abcdefghijklmnopqrstuvwxyz'[:5])
     mesh_q = Mesh(devices.reshape(sharding_tuple_q), name_tuple_q)     
@@ -132,6 +137,10 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
     name_tuple_out = tuple('abcdefghijklmnopqrstuvwxyz'[:3])
     mesh_out = Mesh(devices.reshape(sharding_tuple_out), name_tuple_out)     
     sharding_out = NamedSharding(mesh_out, P(*name_tuple_out))
+
+    name_tuple_id = tuple('abcdefghijklmnopqrstuvwxyz'[:2])
+    mesh_id = Mesh(devices.reshape(sharding_tuple_id), name_tuple_id)     
+    sharding_id = NamedSharding(mesh_out, P(*name_tuple_id))
 
     q_proj = params.q_proj
     k_proj = params.k_proj
