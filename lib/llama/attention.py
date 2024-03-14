@@ -183,12 +183,8 @@ def forward_attention(params: Attention, src_seq: Array, dst_seq: Array, qk_mask
                    P(*name_tuple_k),
                    P(*name_tuple_k))
     
-    specs_tuple_ring = (P(*name_tuple_k),
-                   P(*name_tuple_k),
-                   P(*name_tuple_k),
-                   P(*name_tuple_k)),
-                   PartitionSpec(("dp", "fsdp"), None)
-    
+    specs_tuple_ring = (P(*name_tuple_k), P(*name_tuple_k), P(*name_tuple_k), P(*name_tuple_k), PartitionSpec(("dp", "fsdp"), None))
+
     if attn_impl == 'flash':
         qkv = shard_map(partial(flash_attention, sm_scale=math.sqrt(model_config.d_k), debug=False, causal=False, block_sizes=block_sizes), mesh=mesh_k, in_specs=specs_tuple_flash, out_specs=P(*name_tuple_k), check_rep=False)(q, k, v, attention_bias)
     elif attn_impl == 'ring':
